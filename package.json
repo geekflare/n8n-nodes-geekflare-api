@@ -24,7 +24,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp -r nodes/Geekflare/geekflare.svg dist/nodes/Geekflare/",
+    "build": "tsc -p tsconfig.json && cp -r nodes/Geekflare/favicon.svg dist/nodes/Geekflare/",
     "dev": "tsc --watch",
     "lint": "eslint nodes credentials",
     "lintfix": "eslint nodes credentials --fix",
