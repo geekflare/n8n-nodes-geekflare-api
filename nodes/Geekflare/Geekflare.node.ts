@@ -11,7 +11,7 @@ export class Geekflare implements INodeType {
   description: INodeTypeDescription = {
     displayName: "Geekflare",
     name: "geekflare",
-    icon: "file:geekflare.svg",
+    icon: "file:favicon.svg",
     group: ["transform"],
     version: 1,
     subtitle: '={{$parameter["operation"]}}',
@@ -764,7 +764,152 @@ export class Geekflare implements INodeType {
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    // We will fill this in later
-    return [[]];
+    const items = this.getInputData();
+    const returnData: INodeExecutionData[] = [];
+    const credentials = await this.getCredentials("geekflareApi");
+    const apiKey = credentials.apiKey as string;
+    const baseUrl = "https://api.geekflare.com";
+
+    for (let i = 0; i < items.length; i++) {
+      const operation = this.getNodeParameter("operation", i) as string;
+      let body: IDataObject = {};
+
+      try {
+        if (operation === "webscraping") {
+          const url = this.getNodeParameter("url", i) as string;
+          const format = this.getNodeParameter("format", i) as string[];
+          const opts = this.getNodeParameter(
+            "webscrapingOptions",
+            i,
+          ) as IDataObject;
+          body = { url, format, ...stripEmpty(opts) };
+        } else if (operation === "metascraping") {
+          const url = this.getNodeParameter("url", i) as string;
+          const format = this.getNodeParameter("metaFormat", i) as string;
+          const opts = this.getNodeParameter(
+            "metascrapingOptions",
+            i,
+          ) as IDataObject;
+          body = { url, format, ...stripEmpty(opts) };
+        } else if (operation === "screenshot") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter(
+            "screenshotOptions",
+            i,
+          ) as IDataObject;
+          body = { url, ...stripEmpty(opts) };
+        } else if (operation === "dnsrecord") {
+          const url = this.getNodeParameter("url", i) as string;
+          const types = this.getNodeParameter("types", i) as string[];
+          body = { url, types };
+        } else if (
+          [
+            "up",
+            "redirectcheck",
+            "brokenlink",
+            "ttfb",
+            "httpheader",
+            "httpprotocol",
+            "mtr",
+            "loadtime",
+            "mixedcontent",
+          ].includes(operation)
+        ) {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter("commonOptions", i) as IDataObject;
+          body = { url, ...stripEmpty(opts) };
+        } else if (["tlsscan", "dnssec", "ping"].includes(operation)) {
+          const url = this.getNodeParameter("url", i) as string;
+          body = { url };
+        } else if (operation === "url2pdf") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter(
+            "url2pdfOptions",
+            i,
+          ) as IDataObject;
+          const flat = stripEmpty(opts);
+          const margin: IDataObject = {};
+          if (flat.marginTop !== undefined) {
+            margin.top = flat.marginTop;
+            delete flat.marginTop;
+          }
+          if (flat.marginBottom !== undefined) {
+            margin.bottom = flat.marginBottom;
+            delete flat.marginBottom;
+          }
+          if (flat.marginLeft !== undefined) {
+            margin.left = flat.marginLeft;
+            delete flat.marginLeft;
+          }
+          if (flat.marginRight !== undefined) {
+            margin.right = flat.marginRight;
+            delete flat.marginRight;
+          }
+          body = { url, ...flat };
+          if (Object.keys(margin).length > 0) body.margin = margin;
+        } else if (operation === "openport") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter(
+            "openportOptions",
+            i,
+          ) as IDataObject;
+          body = { url, ...stripEmpty(opts) };
+        } else if (operation === "lighthouse") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter(
+            "lighthouseOptions",
+            i,
+          ) as IDataObject;
+          body = { url, ...stripEmpty(opts) };
+        } else if (operation === "search") {
+          const query = this.getNodeParameter("query", i) as string;
+          const opts = this.getNodeParameter("searchOptions", i) as IDataObject;
+          body = { query, ...stripEmpty(opts) };
+        } else {
+          throw new NodeOperationError(
+            this.getNode(),
+            `Unknown operation: ${operation}`,
+            { itemIndex: i },
+          );
+        }
+
+        const response = await this.helpers.httpRequest({
+          method: "POST",
+          url: `${baseUrl}/${operation}`,
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+          },
+          body,
+          json: true,
+        });
+
+        returnData.push({
+          json: response as IDataObject,
+          pairedItem: { item: i },
+        });
+      } catch (error) {
+        if (this.continueOnFail()) {
+          returnData.push({
+            json: { error: (error as Error).message },
+            pairedItem: { item: i },
+          });
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return [returnData];
   }
+}
+
+function stripEmpty(obj: IDataObject): IDataObject {
+  const result: IDataObject = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== "" && value !== null && value !== undefined && value !== 0) {
+      result[key] = value;
+    }
+  }
+  return result;
 }
