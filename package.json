@@ -1,0 +1,57 @@
+{
+  "name": "n8n-nodes-geekflare-api",
+  "version": "0.1.2",
+  "description": "n8n community node for the Geekflare API — web scraping, screenshots, DNS, SEO, security checks and more.",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n-nodes",
+    "geekflare",
+    "webscraping",
+    "screenshot",
+    "dns",
+    "seo",
+    "automation"
+  ],
+  "license": "MIT",
+  "homepage": "https://geekflare.com",
+  "author": {
+    "name": "Geekflare",
+    "email": "support@geekflare.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geekflare/n8n-nodes-geekflare-api.git"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp -r nodes/Geekflare/favicon.svg dist/nodes/Geekflare/",
+    "dev": "tsc --watch",
+    "lint": "eslint nodes credentials",
+    "lintfix": "eslint nodes credentials --fix",
+    "prepublishOnly": "npm run build && npm run lint"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/GeekflareApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Geekflare/Geekflare.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
+    "eslint": "^10.4.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
