@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/geekflare/n8n-nodes-geekflare-api"
+    "url": "git+https://github.com/geekflare/n8n-nodes-geekflare-api.git"
   },
   "main": "dist/index.js",
   "scripts": {
