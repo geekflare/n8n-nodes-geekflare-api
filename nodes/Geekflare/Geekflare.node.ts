@@ -884,10 +884,15 @@ export class Geekflare implements INodeType {
           json: true,
         });
 
+        const safeResponse = JSON.parse(
+          JSON.stringify(response, getCircularReplacer()),
+        );
+
         returnData.push({
-          json: response as IDataObject,
+          json: safeResponse as IDataObject,
           pairedItem: { item: i },
         });
+
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({
@@ -912,4 +917,15 @@ function stripEmpty(obj: IDataObject): IDataObject {
     }
   }
   return result;
+}
+
+function getCircularReplacer() {
+  const seen = new WeakSet();
+  return (_key: string, value: unknown) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) return undefined;
+      seen.add(value);
+    }
+    return value;
+  };
 }
