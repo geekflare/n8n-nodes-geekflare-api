@@ -1,6 +1,6 @@
 # n8n-nodes-geekflare-api
 
-Official n8n community node for the [Geekflare API](https://geekflare.com/api/). Use Geekflare's web intelligence tools directly inside your n8n workflows — no code required.
+Official n8n community node for the [Geekflare API](https://geekflare.com/api/). Use Geekflare's web intelligence tools directly inside your n8n workflows no code required.
 
 ## What you can do
 
