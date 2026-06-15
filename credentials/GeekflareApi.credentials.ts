@@ -1,4 +1,8 @@
-import { ICredentialType, INodeProperties } from "n8n-workflow";
+import {
+  ICredentialTestRequest,
+  ICredentialType,
+  INodeProperties,
+} from "n8n-workflow";
 
 export class GeekflareApi implements ICredentialType {
   name = "geekflareApi";
@@ -18,4 +22,17 @@ export class GeekflareApi implements ICredentialType {
         "Your Geekflare API key. Find it in your Geekflare dashboard.",
     },
   ];
+
+  test: ICredentialTestRequest = {
+    request: {
+      baseURL: "https://api.geekflare.com",
+      url: "/up",
+      method: "POST",
+      headers: {
+        "x-api-key": "={{$credentials.apiKey}}",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: "https://geekflare.com" }),
+    },
+  };
 }
