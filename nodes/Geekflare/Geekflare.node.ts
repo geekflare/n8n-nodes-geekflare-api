@@ -766,8 +766,6 @@ export class Geekflare implements INodeType {
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
-    const credentials = await this.getCredentials("geekflareApi");
-    const apiKey = credentials.apiKey as string;
     const baseUrl = "https://api.geekflare.com";
 
     for (let i = 0; i < items.length; i++) {
@@ -873,17 +871,19 @@ export class Geekflare implements INodeType {
           );
         }
 
-        const response = await this.helpers.httpRequest({
-          method: "POST",
-          url: `${baseUrl}/${operation}`,
-          headers: {
-            "x-api-key": apiKey,
-            "Content-Type": "application/json",
+        const response = await this.helpers.httpRequestWithAuthentication.call(
+          this,
+          "geekflareApi",
+          {
+            method: "POST",
+            url: `${baseUrl}/${operation}`,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body,
+            json: true,
           },
-          body,
-          json: true,
-        });
-
+        );
         const safeResponse = JSON.parse(
           JSON.stringify(response, getCircularReplacer()),
         );
@@ -892,7 +892,6 @@ export class Geekflare implements INodeType {
           json: safeResponse as IDataObject,
           pairedItem: { item: i },
         });
-
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({

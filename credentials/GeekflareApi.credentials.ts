@@ -1,4 +1,5 @@
 import {
+  IAuthenticate,
   ICredentialTestRequest,
   ICredentialType,
   INodeProperties,
@@ -30,9 +31,19 @@ export class GeekflareApi implements ICredentialType {
       method: "POST",
       headers: {
         "x-api-key": "={{$credentials.apiKey}}",
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ url: "https://geekflare.com" }),
+      body: {
+        url: "https://geekflare.com",
+      },
+    },
+  };
+
+  authenticate: IAuthenticate = {
+    type: "generic",
+    properties: {
+      headers: {
+        "x-api-key": "={{$credentials.apiKey}}",
+      },
     },
   };
 }
