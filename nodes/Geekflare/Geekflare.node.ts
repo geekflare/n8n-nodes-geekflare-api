@@ -5,6 +5,8 @@ import {
   INodeTypeDescription,
   NodeOperationError,
   IDataObject,
+  NodeApiError,
+  JsonObject,
 } from "n8n-workflow";
 
 export class Geekflare implements INodeType {
@@ -900,7 +902,12 @@ export class Geekflare implements INodeType {
           });
           continue;
         }
-        throw error;
+        if (error instanceof NodeOperationError) {
+          throw error;
+        }
+        throw new NodeApiError(this.getNode(), error as JsonObject, {
+          itemIndex: i,
+        });
       }
     }
 
