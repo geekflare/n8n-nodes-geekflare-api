@@ -53,16 +53,6 @@ export class Geekflare implements INodeType {
             description: "Verify DNSSEC configuration",
           },
           {
-            name: "HTTP Header Inspect",
-            value: "httpheader",
-            description: "Retrieve HTTP response headers",
-          },
-          {
-            name: "HTTP Protocol Check",
-            value: "httpprotocol",
-            description: "Detect which HTTP version a server uses",
-          },
-          {
             name: "Lighthouse Audit",
             value: "lighthouse",
             description: "Run a Google Lighthouse performance audit",
@@ -123,11 +113,6 @@ export class Geekflare implements INodeType {
             description: "Analyze TLS/SSL certificate and configuration",
           },
           {
-            name: "TTFB Measurement",
-            value: "ttfb",
-            description: "Measure Time to First Byte",
-          },
-          {
             name: "URL to PDF",
             value: "url2pdf",
             description: "Convert a webpage to a PDF file",
@@ -160,10 +145,7 @@ export class Geekflare implements INodeType {
               "url2pdf",
               "openport",
               "tlsscan",
-              "ttfb",
               "loadtime",
-              "httpheader",
-              "httpprotocol",
               "mixedcontent",
               "dnssec",
               "mtr",
@@ -217,6 +199,35 @@ export class Geekflare implements INodeType {
             default: "desktop",
           },
           {
+            displayName: "Extraction Mode",
+            name: "extractionMode",
+            type: "options",
+            options: [
+              { name: "Default", value: "default" },
+              { name: "CSS Schema", value: "cssSchema" },
+              { name: "XPath Schema", value: "xpathSchema" },
+              { name: "Template", value: "template" },
+            ],
+            default: "default",
+            description: "Only used when Formats includes JSON",
+          },
+          {
+            displayName: "Extraction Schema (JSON)",
+            name: "extractionSchema",
+            type: "json",
+            default: "{}",
+            description:
+              "Custom field-extraction schema used with the CSS Schema/XPath Schema extraction modes",
+          },
+          {
+            displayName: "AI Prompt (JSON)",
+            name: "aiPrompt",
+            type: "json",
+            default: "{}",
+            description:
+              'AI-powered extraction/analysis of the scraped page, e.g. {"type": "prompt", "query": "What is the return policy?"}. Adds +6 credits.',
+          },
+          {
             displayName: "File Output",
             name: "fileOutput",
             type: "boolean",
@@ -230,6 +241,18 @@ export class Geekflare implements INodeType {
             type: "string",
             default: "",
             placeholder: "us, gb, de, in ...",
+            description: "Used when a proxy is active",
+          },
+          {
+            displayName: "Proxy Mode",
+            name: "proxyMode",
+            type: "options",
+            options: [
+              { name: "Never (Default)", value: "false" },
+              { name: "Auto (Retry via Proxy If Blocked)", value: "auto" },
+              { name: "Always", value: "true" },
+            ],
+            default: "false",
           },
           {
             displayName: "Render JavaScript",
@@ -237,7 +260,7 @@ export class Geekflare implements INodeType {
             type: "boolean",
             default: true,
             description:
-              "Whether to execute JavaScript before extracting. Enable for dynamic sites.",
+              "Whether to execute JavaScript before extracting. If left unset, resolved automatically based on whether the page needs it.",
           },
           {
             displayName: "Stealth Mode",
@@ -247,10 +270,28 @@ export class Geekflare implements INodeType {
             description:
               "Whether to bypass CAPTCHAs. Requests will take longer.",
           },
+          {
+            displayName: "Template",
+            name: "template",
+            type: "options",
+            options: [
+              { name: "Product", value: "product" },
+              { name: "Contact", value: "contact" },
+            ],
+            default: "product",
+            description: "Used when Extraction Mode is Template",
+          },
+          {
+            displayName: "Wait Time (Seconds)",
+            name: "waitTime",
+            type: "number",
+            default: 0,
+            description:
+              "Seconds to wait after page load before capturing content",
+          },
         ],
       },
 
-      // ── Meta Scraping ─────────────────────────────────────────────
       {
         displayName: "Format",
         name: "metaFormat",
@@ -517,11 +558,7 @@ export class Geekflare implements INodeType {
               "up",
               "redirectcheck",
               "brokenlink",
-              "ttfb",
-              "httpheader",
-              "httpprotocol",
               "mtr",
-              "loadtime",
               "mixedcontent",
             ],
           },
@@ -543,7 +580,39 @@ export class Geekflare implements INodeType {
         ],
       },
 
-      // ── URL to PDF ────────────────────────────────────────────────
+      {
+        displayName: "Additional Options",
+        name: "loadtimeOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: { show: { operation: ["loadtime"] } },
+        options: [
+          {
+            displayName: "Follow Redirect",
+            name: "followRedirect",
+            type: "boolean",
+            default: false,
+          },
+          {
+            displayName: "Proxy Country",
+            name: "proxyCountry",
+            type: "string",
+            default: "",
+            placeholder: "us, gb, de, in ...",
+          },
+          {
+            displayName: "Target Countries",
+            name: "targetCountries",
+            type: "string",
+            default: "",
+            placeholder: "gb,ca",
+            description:
+              "Up to 3 comma-separated ISO country codes to also test reachability from via proxy, alongside the default US server test",
+          },
+        ],
+      },
+
       {
         displayName: "Additional Options",
         name: "url2pdfOptions",
@@ -741,7 +810,10 @@ export class Geekflare implements INodeType {
             options: [
               { name: "Code", value: "code" },
               { name: "General", value: "general" },
+              { name: "LinkedIn", value: "linkedin" },
+              { name: "PDF", value: "pdf" },
               { name: "Research", value: "research" },
+              { name: "Wiki", value: "wiki" },
             ],
             default: "general",
           },
@@ -843,7 +915,28 @@ export class Geekflare implements INodeType {
             "webscrapingOptions",
             i,
           ) as IDataObject;
-          body = { url, format, ...stripEmpty(opts) };
+          const flat = stripEmpty(opts);
+
+          if (flat.proxyMode !== undefined) {
+            flat.proxyMode =
+              flat.proxyMode === "true"
+                ? true
+                : flat.proxyMode === "false"
+                  ? false
+                  : flat.proxyMode;
+          }
+          if (flat.extractionSchema !== undefined) {
+            const parsed = parseJsonField(flat.extractionSchema as string);
+            if (parsed) flat.extractionSchema = parsed;
+            else delete flat.extractionSchema;
+          }
+          if (flat.aiPrompt !== undefined) {
+            const parsed = parseJsonField(flat.aiPrompt as string);
+            if (parsed) flat.aiPrompt = parsed;
+            else delete flat.aiPrompt;
+          }
+
+          body = { url, format, ...flat };
         } else if (operation === "metascraping") {
           const url = this.getNodeParameter("url", i) as string;
           const format = this.getNodeParameter("metaFormat", i) as string;
@@ -864,21 +957,30 @@ export class Geekflare implements INodeType {
           const types = this.getNodeParameter("types", i) as string[];
           body = { url, types };
         } else if (
-          [
-            "up",
-            "redirectcheck",
-            "brokenlink",
-            "ttfb",
-            "httpheader",
-            "httpprotocol",
-            "mtr",
-            "loadtime",
-            "mixedcontent",
-          ].includes(operation)
+          ["up", "redirectcheck", "brokenlink", "mtr", "mixedcontent"].includes(
+            operation,
+          )
         ) {
           const url = this.getNodeParameter("url", i) as string;
           const opts = this.getNodeParameter("commonOptions", i) as IDataObject;
           body = { url, ...stripEmpty(opts) };
+        } else if (operation === "loadtime") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter(
+            "loadtimeOptions",
+            i,
+          ) as IDataObject;
+          const flat = stripEmpty(opts);
+          if (flat.targetCountries !== undefined) {
+            const targetCountries = (flat.targetCountries as string)
+              .split(",")
+              .map((c) => c.trim())
+              .filter((c) => c.length > 0);
+            delete flat.targetCountries;
+            if (targetCountries.length > 0)
+              flat.targetCountries = targetCountries;
+          }
+          body = { url, ...flat };
         } else if (["tlsscan", "dnssec", "ping"].includes(operation)) {
           const url = this.getNodeParameter("url", i) as string;
           body = { url };
@@ -984,6 +1086,16 @@ function stripEmpty(obj: IDataObject): IDataObject {
     }
   }
   return result;
+}
+
+function parseJsonField(value: string): IDataObject | undefined {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "{}") return undefined;
+  try {
+    return JSON.parse(trimmed) as IDataObject;
+  } catch {
+    return undefined;
+  }
 }
 
 function getCircularReplacer() {

@@ -1,15 +1,15 @@
 # n8n-nodes-geekflare-api
 
-Official n8n community node for the [Geekflare API](https://geekflare.com/api/). Use Geekflare's web intelligence tools directly inside your n8n workflows no code required.
+Official n8n community node for the [Geekflare](https://geekflare.com/api/). Use Geekflare's web intelligence tools directly inside your n8n workflows no code required.
 
 ## What you can do
 
-- **Scrape** any webpage and get back clean HTML, Markdown, JSON, or LLM-ready text
+- **Scrape** any webpage and get back clean HTML, Markdown, JSON, or LLM-ready text — including structured data via extraction templates or AI prompts
 - **Capture screenshots** with full-page, Retina, and CAPTCHA-bypass support
 - **Search the web** with structured results and optional AI-grounded answers
 - **Convert URLs to PDF** with full layout control
-- **Run DNS, TLS, HTTP, and port diagnostics** on any domain
-- **Audit performance** with Lighthouse, TTFB, and load time checks
+- **Run DNS, TLS, and port diagnostics** on any domain
+- **Audit performance** with Lighthouse and load time checks
 - **Monitor uptime**, redirect chains, broken links, and mixed content
 
 ## Installation
@@ -21,7 +21,7 @@ n8n-nodes-geekflare-api
 ```
 
 ## Get an API Key
- 
+
 Sign up at [geekflare.com/api](https://geekflare.com/api) and copy your API key from the dashboard.
 
 ## Credentials Setup
@@ -36,18 +36,24 @@ After installing the node:
 
 ### Web Scraping
 
-Scrape full page content from any URL. Returns HTML, Markdown, JSON, or LLM-optimised text.
+Scrape full page content from any URL. Returns HTML, Markdown, JSON, or LLM-optimised text — including structured data via ready-made extraction templates, custom CSS/XPath schemas, or AI-powered extraction.
 
-| Parameter      | Type                  | Default        | Description                                                                                          |
-| -------------- | --------------------- | -------------- | ---------------------------------------------------------------------------------------------------- |
-| `url` \*       | string                | —              | Target URL                                                                                           |
-| `formats`      | array                 | `["markdown"]` | Output formats (up to 3): `html`, `markdown`, `json`, `markdown-llm`, `html-llm`, `text`, `text-llm` |
-| `device`       | `desktop` \| `mobile` | `desktop`      | Device to emulate                                                                                    |
-| `proxyCountry` | string                | —              | Route through a country ISO code (e.g. `us`)                                                         |
-| `renderJS`     | boolean               | `true`         | Execute JavaScript before extracting. Disable for faster static scrapes                              |
-| `fileOutput`   | boolean               | `false`        | Return a download URL instead of inline content                                                      |
-| `blockAds`     | boolean               | `true`         | Block ads during scrape                                                                              |
-| `stealth`      | boolean               | `false`        | Bypass CAPTCHAs (slower)                                                                             |
+| Parameter          | Type                                                    | Default        | Description                                                                                                                         |
+| ------------------ | ------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `url` \*           | string                                                  | —              | Target URL                                                                                                                          |
+| `formats`          | array                                                   | `["markdown"]` | Output formats (up to 3): `html`, `markdown`, `json`, `markdown-llm`, `html-llm`, `text`, `text-llm`                                |
+| `device`           | `desktop` \| `mobile`                                   | `desktop`      | Device to emulate                                                                                                                   |
+| `proxyMode`        | `false` \| `auto` \| `true`                             | `false`        | `false` never uses a proxy, `auto` retries via proxy if blocked, `true` always uses one                                             |
+| `proxyCountry`     | string                                                  | —              | Route through a country ISO code (e.g. `us`), used when a proxy is active                                                           |
+| `renderJS`         | boolean                                                 | auto           | Execute JavaScript before extracting. If left unset, resolved automatically based on whether the page needs it                      |
+| `fileOutput`       | boolean                                                 | `false`        | Return a download URL instead of inline content                                                                                     |
+| `blockAds`         | boolean                                                 | `true`         | Block ads during scrape                                                                                                             |
+| `stealth`          | boolean                                                 | `false`        | Bypass CAPTCHAs (slower)                                                                                                            |
+| `waitTime`         | number                                                  | `0`            | Seconds to wait after page load before capturing content                                                                            |
+| `extractionMode`   | `default` \| `cssSchema` \| `xpathSchema` \| `template` | `default`      | Only used when Formats includes JSON                                                                                                |
+| `template`         | `product` \| `contact`                                  | —              | Ready-made extraction template when Extraction Mode is Template                                                                     |
+| `extractionSchema` | JSON                                                    | —              | Custom field-extraction schema for CSS Schema/XPath Schema modes                                                                    |
+| `aiPrompt`         | JSON                                                    | —              | AI-powered extraction/analysis of the scraped page (prompt, schema, listing, summary, sentiment, or keywords mode). Adds +6 credits |
 
 ---
 
@@ -96,20 +102,20 @@ Capture a screenshot of any website. Supports full-page, Retina, and AI-friendly
 
 Search the web and return clean, structured results. Supports web, news, and image search with optional AI-grounded answers.
 
-| Parameter        | Type                              | Default | Description                                        |
-| ---------------- | --------------------------------- | ------- | -------------------------------------------------- |
-| `query` \*       | string                            | —       | Search query                                       |
-| `limit`          | number                            | `10`    | Number of results                                  |
-| `time`           | string                            | —       | Time filter: `any`, `d`, `w`, `m`, `y`, `d7`, `h6` |
-| `location`       | string                            | —       | Country ISO code to localise results               |
-| `source`         | `web` \| `news` \| `images`       | `web`   |                                                    |
-| `category`       | `general` \| `code` \| `research` | —       |                                                    |
-| `format`         | `json` \| `markdown` \| `html`    | `json`  |                                                    |
-| `includeDomains` | string                            | —       | Comma-separated domains to include                 |
-| `excludeDomains` | string                            | —       | Comma-separated domains to exclude                 |
-| `groundedAnswer` | boolean                           | `false` | Generate an AI answer synthesised from results     |
-| `scrape`         | boolean                           | `false` | Also scrape top result pages                       |
-| `scrapeLimit`    | number                            | —       | How many pages to scrape (requires `scrape: true`) |
+| Parameter        | Type                                                               | Default | Description                                        |
+| ---------------- | ------------------------------------------------------------------ | ------- | -------------------------------------------------- |
+| `query` \*       | string                                                             | —       | Search query                                       |
+| `limit`          | number                                                             | `10`    | Number of results                                  |
+| `time`           | string                                                             | —       | Time filter: `any`, `d`, `w`, `m`, `y`, `d7`, `h6` |
+| `location`       | string                                                             | —       | Country ISO code to localise results               |
+| `source`         | `web` \| `news` \| `images`                                        | `web`   |                                                    |
+| `category`       | `general` \| `code` \| `pdf` \| `research` \| `linkedin` \| `wiki` | —       |                                                    |
+| `format`         | `json` \| `markdown` \| `html`                                     | `json`  |                                                    |
+| `includeDomains` | string                                                             | —       | Comma-separated domains to include                 |
+| `excludeDomains` | string                                                             | —       | Comma-separated domains to exclude                 |
+| `groundedAnswer` | boolean                                                            | `false` | Generate an AI answer synthesised from results     |
+| `scrape`         | boolean                                                            | `false` | Also scrape top result pages                       |
+| `scrapeLimit`    | number                                                             | —       | How many pages to scrape (requires `scrape: true`) |
 
 ---
 
@@ -219,47 +225,14 @@ Run a full Lighthouse audit — performance, SEO, accessibility, and best practi
 
 ### Load Time
 
-Measure full page load time from any location.
+Measure full page load time from any location. Optionally test reachability from multiple locations at once.
 
-| Parameter        | Type    | Default |
-| ---------------- | ------- | ------- |
-| `url` \*         | string  | —       |
-| `proxyCountry`   | string  | —       |
-| `followRedirect` | boolean | `false` |
-
----
-
-### TTFB Measurement
-
-Measure Time To First Byte (TTFB).
-
-| Parameter        | Type    | Default |
-| ---------------- | ------- | ------- |
-| `url` \*         | string  | —       |
-| `followRedirect` | boolean | `false` |
-
----
-
-### HTTP Header Inspect
-
-Retrieve HTTP response headers for a URL.
-
-| Parameter        | Type    | Default |
-| ---------------- | ------- | ------- |
-| `url` \*         | string  | —       |
-| `proxyCountry`   | string  | —       |
-| `followRedirect` | boolean | `false` |
-
----
-
-### HTTP Protocol Check
-
-Check which HTTP protocol versions (HTTP/1.1, HTTP/2, HTTP/3) a server supports.
-
-| Parameter        | Type    | Default |
-| ---------------- | ------- | ------- |
-| `url` \*         | string  | —       |
-| `followRedirect` | boolean | `false` |
+| Parameter         | Type                   | Default | Description                                                                                                                |
+| ----------------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `url` \*          | string                 | —       |                                                                                                                            |
+| `proxyCountry`    | string                 | —       |                                                                                                                            |
+| `followRedirect`  | boolean                | `false` |                                                                                                                            |
+| `targetCountries` | comma-separated string | —       | Up to 3 ISO country codes to also test via proxy, alongside the default US test. Returns a per-location breakdown when set |
 
 ---
 
