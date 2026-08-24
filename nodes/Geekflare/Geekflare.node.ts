@@ -183,6 +183,14 @@ export class Geekflare implements INodeType {
         displayOptions: { show: { operation: ["webscraping"] } },
         options: [
           {
+            displayName: "AI Prompt (JSON)",
+            name: "aiPrompt",
+            type: "json",
+            default: "{}",
+            description:
+              'AI-powered extraction/analysis of the scraped page, e.g. {"type": "prompt", "query": "What is the return policy?"}. Adds +6 credits.',
+          },
+          {
             displayName: "Block Ads",
             name: "blockAds",
             type: "boolean",
@@ -218,14 +226,6 @@ export class Geekflare implements INodeType {
             default: "{}",
             description:
               "Custom field-extraction schema used with the CSS Schema/XPath Schema extraction modes",
-          },
-          {
-            displayName: "AI Prompt (JSON)",
-            name: "aiPrompt",
-            type: "json",
-            default: "{}",
-            description:
-              'AI-powered extraction/analysis of the scraped page, e.g. {"type": "prompt", "query": "What is the return policy?"}. Adds +6 credits.',
           },
           {
             displayName: "File Output",
