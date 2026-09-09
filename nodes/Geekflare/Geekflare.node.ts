@@ -38,6 +38,12 @@ export class Geekflare implements INodeType {
         noDataExpression: true,
         options: [
           {
+            name: "Brand Extraction",
+            value: "brand",
+            description:
+              "Extract brand identity and design information from a website",
+          },
+          {
             name: "Broken Link Check",
             value: "brokenlink",
             description: "Find broken links on a webpage",
@@ -151,6 +157,7 @@ export class Geekflare implements INodeType {
               "mtr",
               "ping",
               "lighthouse",
+              "brand",
             ],
           },
         },
@@ -364,12 +371,23 @@ export class Geekflare implements INodeType {
             type: "boolean",
             default: false,
           },
+
           {
             displayName: "Block Ads",
             name: "blockAds",
             type: "boolean",
             default: true,
           },
+
+          {
+            displayName: "Capture Beyond Viewport",
+            name: "captureBeyondViewport",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to allow the capture to include content beyond the configured viewport",
+          },
+
           {
             displayName: "Delay (seconds)",
             name: "delay",
@@ -377,6 +395,7 @@ export class Geekflare implements INodeType {
             default: 0,
             placeholder: "2",
           },
+
           {
             displayName: "Device",
             name: "device",
@@ -387,30 +406,53 @@ export class Geekflare implements INodeType {
             ],
             default: "desktop",
           },
+
+          {
+            displayName: "Disable Animations",
+            name: "disableAnimations",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to freeze CSS/JS animations and transitions before capturing",
+          },
+
+          {
+            displayName: "Fallback to Full Page",
+            name: "fallbackToFullPage",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to fall back to a full-page capture if the selector is not found, instead of failing",
+          },
+
           {
             displayName: "Full Page",
             name: "fullPage",
             type: "boolean",
             default: false,
           },
+
           {
             displayName: "Hide Cookies Banner",
             name: "hideCookie",
             type: "boolean",
             default: true,
           },
+
           {
             displayName: "Highlight Links",
             name: "highlightLinks",
             type: "boolean",
             default: false,
           },
+
           {
             displayName: "Image Quality (1-100)",
             name: "quality",
             type: "number",
             default: 90,
           },
+
           {
             displayName: "Image Type",
             name: "type",
@@ -422,70 +464,7 @@ export class Geekflare implements INodeType {
             ],
             default: "png",
           },
-          {
-            displayName: "Page Height (px)",
-            name: "pageHeight",
-            type: "number",
-            default: 0,
-            placeholder: "2000",
-          },
-          {
-            displayName: "Proxy Country",
-            name: "proxyCountry",
-            type: "string",
-            default: "",
-            placeholder: "us, gb, de, in ...",
-          },
-          {
-            displayName: "Scale Factor",
-            name: "scaleFactor",
-            type: "number",
-            default: 1,
-          },
-          {
-            displayName: "Skip CAPTCHA",
-            name: "skipCaptcha",
-            type: "boolean",
-            default: true,
-          },
-          {
-            displayName: "Viewport Height (px)",
-            name: "viewportHeight",
-            type: "number",
-            default: 0,
-            placeholder: "768",
-          },
-          {
-            displayName: "Viewport Width (px)",
-            name: "viewportWidth",
-            type: "number",
-            default: 0,
-            placeholder: "1366",
-          },
-          {
-            displayName: "Capture Beyond Viewport",
-            name: "captureBeyondViewport",
-            type: "boolean",
-            default: false,
-            description:
-              "Whether to allow the capture to include content beyond the configured viewport",
-          },
-          {
-            displayName: "Disable Animations",
-            name: "disableAnimations",
-            type: "boolean",
-            default: false,
-            description:
-              "Whether to freeze CSS/JS animations and transitions before capturing",
-          },
-          {
-            displayName: "Fallback to Full Page",
-            name: "fallbackToFullPage",
-            type: "boolean",
-            default: false,
-            description:
-              "Whether to fall back to a full-page capture if the selector is not found, instead of failing",
-          },
+
           {
             displayName: "Inline",
             name: "inline",
@@ -494,6 +473,23 @@ export class Geekflare implements INodeType {
             description:
               "Whether to return image data inline instead of a CDN URL",
           },
+
+          {
+            displayName: "Page Height (px)",
+            name: "pageHeight",
+            type: "number",
+            default: 0,
+            placeholder: "2000",
+          },
+
+          {
+            displayName: "Proxy Country",
+            name: "proxyCountry",
+            type: "string",
+            default: "",
+            placeholder: "us, gb, de, in ...",
+          },
+
           {
             displayName: "Remove Background",
             name: "removeBackground",
@@ -502,6 +498,14 @@ export class Geekflare implements INodeType {
             description:
               "Whether to remove the page background for a transparent PNG (PNG only)",
           },
+
+          {
+            displayName: "Scale Factor",
+            name: "scaleFactor",
+            type: "number",
+            default: 1,
+          },
+
           {
             displayName: "Selector",
             name: "selector",
@@ -511,6 +515,14 @@ export class Geekflare implements INodeType {
             description:
               "CSS selector of the element to capture, instead of the full viewport/page",
           },
+
+          {
+            displayName: "Skip CAPTCHA",
+            name: "skipCaptcha",
+            type: "boolean",
+            default: true,
+          },
+
           {
             displayName: "Theme",
             name: "theme",
@@ -522,6 +534,22 @@ export class Geekflare implements INodeType {
             ],
             default: "auto",
             description: "Color scheme to render before capturing",
+          },
+
+          {
+            displayName: "Viewport Height (px)",
+            name: "viewportHeight",
+            type: "number",
+            default: 0,
+            placeholder: "768",
+          },
+
+          {
+            displayName: "Viewport Width (px)",
+            name: "viewportWidth",
+            type: "number",
+            default: 0,
+            placeholder: "1366",
           },
         ],
       },
