@@ -356,6 +356,41 @@ export class Geekflare implements INodeType {
         ],
       },
 
+      // ── Brand Extraction ─────────────────────────────────────────
+      {
+        displayName: "Additional Options",
+        name: "brandOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: { show: { operation: ["brand"] } },
+        options: [
+          {
+            displayName: "Force Refresh",
+            name: "refresh",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to bypass any existing cached data and force an on-demand fetch",
+          },
+          {
+            displayName: "Mode",
+            name: "mode",
+            type: "options",
+            options: [
+              { name: "Standard", value: "standard" },
+              {
+                name: "Enriched (LLM Company Intelligence)",
+                value: "enriched",
+              },
+            ],
+            default: "standard",
+            description:
+              "Depth of brand data to return. Enriched includes LLM-synthesized company intelligence.",
+          },
+        ],
+      },
+
       // ── Screenshot ────────────────────────────────────────────────
       {
         displayName: "Additional Options",
@@ -973,6 +1008,10 @@ export class Geekflare implements INodeType {
             i,
           ) as IDataObject;
           body = { url, format, ...stripEmpty(opts) };
+        } else if (operation === "brand") {
+          const url = this.getNodeParameter("url", i) as string;
+          const opts = this.getNodeParameter("brandOptions", i) as IDataObject;
+          body = { url, ...stripEmpty(opts) };
         } else if (operation === "screenshot") {
           const url = this.getNodeParameter("url", i) as string;
           const opts = this.getNodeParameter(
