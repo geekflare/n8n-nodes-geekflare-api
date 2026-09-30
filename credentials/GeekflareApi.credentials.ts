@@ -8,6 +8,7 @@ import {
 export class GeekflareApi implements ICredentialType {
   name = "geekflareApi";
   displayName = "Geekflare API";
+  icon = "file:favicon.svg" as const;
   documentationUrl = "https://docs.geekflare.com/api/intro";
   properties: INodeProperties[] = [
     {

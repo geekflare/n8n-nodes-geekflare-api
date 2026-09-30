@@ -3,6 +3,7 @@ import {
   INodeExecutionData,
   INodeType,
   INodeTypeDescription,
+  NodeConnectionTypes,
   NodeOperationError,
   IDataObject,
   NodeApiError,
@@ -17,13 +18,14 @@ export class Geekflare implements INodeType {
     group: ["transform"],
     version: 1,
     subtitle: '={{$parameter["operation"]}}',
+    usableAsTool: true,
     description:
       "Web scraping, screenshots, DNS, SEO audits, security checks and more via the Geekflare API",
     defaults: {
       name: "Geekflare",
     },
-    inputs: ["main"],
-    outputs: ["main"],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [
       {
         name: "geekflareApi",
@@ -443,7 +445,7 @@ export class Geekflare implements INodeType {
           },
 
           {
-            displayName: "Delay (seconds)",
+            displayName: "Delay (Seconds)",
             name: "delay",
             type: "number",
             default: 0,
@@ -529,7 +531,7 @@ export class Geekflare implements INodeType {
           },
 
           {
-            displayName: "Page Height (px)",
+            displayName: "Page Height (Px)",
             name: "pageHeight",
             type: "number",
             default: 0,
@@ -591,7 +593,7 @@ export class Geekflare implements INodeType {
           },
 
           {
-            displayName: "Viewport Height (px)",
+            displayName: "Viewport Height (Px)",
             name: "viewportHeight",
             type: "number",
             default: 0,
@@ -599,7 +601,7 @@ export class Geekflare implements INodeType {
           },
 
           {
-            displayName: "Viewport Width (px)",
+            displayName: "Viewport Width (Px)",
             name: "viewportWidth",
             type: "number",
             default: 0,
@@ -726,25 +728,25 @@ export class Geekflare implements INodeType {
             default: true,
           },
           {
-            displayName: "Margin Bottom (mm)",
+            displayName: "Margin Bottom (Mm)",
             name: "marginBottom",
             type: "number",
             default: 25,
           },
           {
-            displayName: "Margin Left (mm)",
+            displayName: "Margin Left (Mm)",
             name: "marginLeft",
             type: "number",
             default: 25,
           },
           {
-            displayName: "Margin Right (mm)",
+            displayName: "Margin Right (Mm)",
             name: "marginRight",
             type: "number",
             default: 25,
           },
           {
-            displayName: "Margin Top (mm)",
+            displayName: "Margin Top (Mm)",
             name: "marginTop",
             type: "number",
             default: 25,
@@ -820,7 +822,7 @@ export class Geekflare implements INodeType {
               { name: "Top 1000", value: "1000" },
               { name: "Top 5000", value: "5000" },
             ],
-            default: "",
+            default: "100",
           },
         ],
       },
@@ -1150,9 +1152,6 @@ export class Geekflare implements INodeType {
             pairedItem: { item: i },
           });
           continue;
-        }
-        if (error instanceof NodeOperationError) {
-          throw error;
         }
         throw new NodeApiError(this.getNode(), error as JsonObject, {
           itemIndex: i,
