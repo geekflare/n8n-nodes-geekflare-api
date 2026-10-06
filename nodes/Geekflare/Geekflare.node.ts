@@ -216,7 +216,7 @@ export class Geekflare implements INodeType {
             type: "json",
             default: "{}",
             description:
-              'AI-powered extraction/analysis of the scraped page, e.g. {"type": "prompt", "query": "What is the return policy?"}. Adds +6 credits.',
+              'AI-powered extraction/analysis of the scraped page, e.g. {"type": "prompt", "query": "What is the return policy?"}. Adds +7 credits.',
           },
           {
             displayName: "Block Ads",
@@ -245,7 +245,8 @@ export class Geekflare implements INodeType {
               { name: "Template", value: "template" },
             ],
             default: "default",
-            description: "Only used when Formats includes JSON",
+            description:
+              "JSON output is used automatically when an extraction mode other than Default is requested",
           },
           {
             displayName: "Extraction Schema (JSON)",
@@ -812,6 +813,14 @@ export class Geekflare implements INodeType {
             placeholder: "80,443,1000-1010",
           },
           {
+            displayName: "Detect Services",
+            name: "detectServices",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to run service and version detection on the open ports found, which makes the scan slower",
+          },
+          {
             displayName: "Top Ports",
             name: "topPorts",
             type: "options",
@@ -852,6 +861,8 @@ export class Geekflare implements INodeType {
             type: "string",
             default: "",
             placeholder: "--only-categories=seo",
+            description:
+              "Space-separated Lighthouse CLI flags, for example --only-categories=seo --preset=desktop",
           },
           {
             displayName: "Follow Redirect",
@@ -900,6 +911,27 @@ export class Geekflare implements INodeType {
               { name: "Wiki", value: "wiki" },
             ],
             default: "general",
+            description: "Ignored when SERP Mode is enabled",
+          },
+          {
+            displayName: "City",
+            name: "city",
+            type: "string",
+            default: "",
+            placeholder: "London,England,United Kingdom",
+            description:
+              "City to target for localized results. Takes priority over Location / Country. Use the exact name from the supported cities list.",
+          },
+          {
+            displayName: "Device",
+            name: "device",
+            type: "options",
+            options: [
+              { name: "Desktop", value: "desktop" },
+              { name: "Mobile", value: "mobile" },
+            ],
+            default: "desktop",
+            description: "Device to emulate when searching",
           },
           {
             displayName: "Exclude Domains",
@@ -918,6 +950,7 @@ export class Geekflare implements INodeType {
               { name: "Markdown", value: "markdown" },
             ],
             default: "json",
+            description: "Ignored when SERP Mode is enabled",
           },
           {
             displayName: "Grounded Answer",
@@ -925,7 +958,7 @@ export class Geekflare implements INodeType {
             type: "boolean",
             default: false,
             description:
-              "Whether to generate an AI answer synthesized from search results",
+              "Whether to generate an AI answer synthesized from search results. Ignored when SERP Mode is enabled.",
           },
           {
             displayName: "Include Domains",
@@ -952,12 +985,24 @@ export class Geekflare implements INodeType {
             name: "scrapeLimit",
             type: "number",
             default: 3,
+            description:
+              "Number of result URLs to scrape. Requires Scrape Results.",
           },
           {
             displayName: "Scrape Results",
             name: "scrape",
             type: "boolean",
             default: false,
+            description:
+              "Whether to scrape and extract content from the result URLs. Ignored when SERP Mode is enabled.",
+          },
+          {
+            displayName: "SERP Mode",
+            name: "serp",
+            type: "boolean",
+            default: false,
+            description:
+              "Whether to return the full Google results page, including organic results, AI Overview, related searches and People Also Ask",
           },
           {
             displayName: "Source",
@@ -1104,14 +1149,26 @@ export class Geekflare implements INodeType {
             "openportOptions",
             i,
           ) as IDataObject;
-          body = { url, ...stripEmpty(opts) };
+          const flat = stripEmpty(opts);
+          if (flat.topPorts !== undefined) {
+            flat.topPorts = Number(flat.topPorts);
+          }
+          body = { url, ...flat };
         } else if (operation === "lighthouse") {
           const url = this.getNodeParameter("url", i) as string;
           const opts = this.getNodeParameter(
             "lighthouseOptions",
             i,
           ) as IDataObject;
-          body = { url, ...stripEmpty(opts) };
+          const flat = stripEmpty(opts);
+          if (flat.parameters !== undefined) {
+            const parameters = (flat.parameters as string)
+              .split(/\s+/)
+              .filter((p) => p.length > 0);
+            delete flat.parameters;
+            if (parameters.length > 0) flat.parameters = parameters;
+          }
+          body = { url, ...flat };
         } else if (operation === "search") {
           const query = this.getNodeParameter("query", i) as string;
           const opts = this.getNodeParameter("searchOptions", i) as IDataObject;
