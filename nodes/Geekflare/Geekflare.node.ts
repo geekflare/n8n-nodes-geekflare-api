@@ -14,9 +14,10 @@ export class Geekflare implements INodeType {
   description: INodeTypeDescription = {
     displayName: "Geekflare",
     name: "geekflare",
-    icon: "file:favicon.svg",
+    icon: { light: "file:favicon.svg", dark: "file:favicon.svg" },
     group: ["transform"],
-    version: 1,
+    version: [1, 2],
+    defaultVersion: 2,
     subtitle: '={{$parameter["operation"]}}',
     usableAsTool: true,
     description:
@@ -151,6 +152,175 @@ export class Geekflare implements INodeType {
           },
         ],
         default: "webscraping",
+        displayOptions: { show: { "@version": [1] } },
+      },
+      {
+        displayName: "Resource",
+        name: "resource",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: { show: { "@version": [2] } },
+        options: [
+          { name: "Network", value: "network" },
+          { name: "Page Content", value: "pageContent" },
+          { name: "Search", value: "search" },
+          { name: "Site Monitoring", value: "siteMonitoring" },
+        ],
+        default: "pageContent",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: { show: { "@version": [2], resource: ["network"] } },
+        options: [
+          {
+            name: "DNS Record Lookup",
+            value: "dnsrecord",
+            action: "Retrieve DNS records for a domain",
+            description: "Retrieve DNS records for a domain",
+          },
+          {
+            name: "DNSSEC Check",
+            value: "dnssec",
+            action: "Verify DNSSEC configuration for a domain",
+            description: "Verify DNSSEC configuration",
+          },
+          {
+            name: "MTR Trace",
+            value: "mtr",
+            action: "Run an MTR network trace to a host",
+            description: "Run an MTR network trace to a host",
+          },
+          {
+            name: "Open Port Scan",
+            value: "openport",
+            action: "Scan for open ports on a host",
+            description: "Scan for open ports on a host",
+          },
+          {
+            name: "Ping",
+            value: "ping",
+            action: "Ping a host and measure latency",
+            description: "Ping a host and measure latency",
+          },
+          {
+            name: "TLS/SSL Scan",
+            value: "tlsscan",
+            action: "Analyze TLS/SSL certificate and configuration",
+            description: "Analyze TLS/SSL certificate and configuration",
+          },
+        ],
+        default: "dnsrecord",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: {
+          show: { "@version": [2], resource: ["pageContent"] },
+        },
+        options: [
+          {
+            name: "Brand Extraction",
+            value: "brand",
+            action:
+              "Extract brand identity and design information from a website",
+            description:
+              "Extract brand identity and design information from a website",
+          },
+          {
+            name: "Meta Scraping",
+            value: "metascraping",
+            action: "Extract meta tags and Open Graph data from a webpage",
+            description: "Extract meta tags and Open Graph data",
+          },
+          {
+            name: "Screenshot",
+            value: "screenshot",
+            action: "Capture a screenshot of a webpage",
+            description: "Capture a full screenshot of a webpage",
+          },
+          {
+            name: "URL to PDF",
+            value: "url2pdf",
+            action: "Convert a webpage to a PDF file",
+            description: "Convert a webpage to a PDF file",
+          },
+          {
+            name: "Web Scraping",
+            value: "webscraping",
+            action: "Scrape content from a webpage",
+            description: "Scrape content from any webpage",
+          },
+        ],
+        default: "webscraping",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: { show: { "@version": [2], resource: ["search"] } },
+        options: [
+          {
+            name: "Search",
+            value: "search",
+            action: "Perform a web, news, or image search",
+            description: "Perform a web, news, or image search",
+          },
+        ],
+        default: "search",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: {
+          show: { "@version": [2], resource: ["siteMonitoring"] },
+        },
+        options: [
+          {
+            name: "Broken Link Check",
+            value: "brokenlink",
+            action: "Find broken links on a webpage",
+            description: "Find broken links on a webpage",
+          },
+          {
+            name: "Lighthouse Audit",
+            value: "lighthouse",
+            action: "Run a Google Lighthouse performance audit",
+            description: "Run a Google Lighthouse performance audit",
+          },
+          {
+            name: "Load Time",
+            value: "loadtime",
+            action: "Measure full page load time",
+            description: "Measure full page load time",
+          },
+          {
+            name: "Mixed Content Check",
+            value: "mixedcontent",
+            action: "Detect HTTP resources on HTTPS pages",
+            description: "Detect HTTP resources on HTTPS pages",
+          },
+          {
+            name: "Redirect Chain Check",
+            value: "redirectcheck",
+            action: "Trace all redirects for a URL",
+            description: "Trace all redirects for a URL",
+          },
+          {
+            name: "Site Up Check",
+            value: "up",
+            action: "Check if a website is online",
+            description: "Check if a website is online",
+          },
+        ],
+        default: "up",
       },
       {
         displayName: "URL",
