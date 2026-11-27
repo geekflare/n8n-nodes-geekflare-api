@@ -8,6 +8,7 @@ import {
   IDataObject,
   NodeApiError,
   JsonObject,
+  IHttpRequestMethods,
 } from "n8n-workflow";
 
 export class Geekflare implements INodeType {
@@ -161,6 +162,8 @@ export class Geekflare implements INodeType {
         noDataExpression: true,
         displayOptions: { show: { "@version": [2] } },
         options: [
+          { name: "Crawl", value: "crawl" },
+          { name: "Map", value: "map" },
           { name: "Network", value: "network" },
           { name: "Page Content", value: "pageContent" },
           { name: "Search", value: "search" },
@@ -323,6 +326,100 @@ export class Geekflare implements INodeType {
         default: "up",
       },
       {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: { show: { "@version": [2], resource: ["crawl"] } },
+        options: [
+          {
+            name: "Cancel",
+            value: "cancel",
+            action: "Cancel a running crawl",
+            description: "Cancel a running crawl",
+          },
+          {
+            name: "Download",
+            value: "download",
+            action: "Get a ZIP of the crawled pages",
+            description: "Get a ZIP of the crawled pages",
+          },
+          {
+            name: "Get Errors",
+            value: "getErrors",
+            action: "List failed pages of a crawl",
+            description: "List failed pages of a crawl with error details",
+          },
+          {
+            name: "Get Status",
+            value: "getStatus",
+            action: "Get crawl status progress and pages",
+            description: "Get crawl status, progress, timing and pages",
+          },
+          {
+            name: "Get Trace",
+            value: "getTrace",
+            action: "Show how a URL was reached from the seed",
+            description: "Show how a URL was reached from the seed",
+          },
+          {
+            name: "Get Webhook Deliveries",
+            value: "getWebhookDeliveries",
+            action: "List webhook deliveries for a crawl",
+            description: "List webhook deliveries for a crawl",
+          },
+          {
+            name: "List",
+            value: "list",
+            action: "List crawls",
+            description: "List your crawls",
+          },
+          {
+            name: "Start",
+            value: "start",
+            action: "Start an asynchronous crawl",
+            description:
+              "Start an asynchronous crawl and get a crawl ID to check later",
+          },
+          {
+            name: "Start Sync",
+            value: "startSync",
+            action: "Crawl a small site and return pages",
+            description:
+              "Crawl a small site and return the page content in the same response",
+          },
+        ],
+        default: "start",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: { show: { "@version": [2], resource: ["map"] } },
+        options: [
+          {
+            name: "Get Async Status",
+            value: "getAsyncStatus",
+            action: "Get map job status and result",
+            description: "Get the status and result of a background map job",
+          },
+          {
+            name: "Get URLs",
+            value: "map",
+            action: "Get all pages of a website",
+            description: "Map the URLs of a website and wait for the result",
+          },
+          {
+            name: "Start Async",
+            value: "startAsync",
+            action: "Start a map as a background job",
+            description: "Start a map as a background job",
+          },
+        ],
+        default: "map",
+      },
+      {
         displayName: "URL",
         name: "url",
         type: "string",
@@ -349,6 +446,10 @@ export class Geekflare implements INodeType {
               "ping",
               "lighthouse",
               "brand",
+              "start",
+              "startSync",
+              "map",
+              "startAsync",
             ],
           },
         },
@@ -1194,6 +1295,396 @@ export class Geekflare implements INodeType {
           },
         ],
       },
+
+      // ── Crawl / Map: identifiers ──────────────────────────────────
+      {
+        displayName: "Crawl ID",
+        name: "crawlId",
+        type: "string",
+        default: "",
+        required: true,
+        displayOptions: {
+          show: {
+            resource: ["crawl"],
+            operation: [
+              "cancel",
+              "download",
+              "getErrors",
+              "getStatus",
+              "getTrace",
+              "getWebhookDeliveries",
+            ],
+          },
+        },
+      },
+      {
+        displayName: "Job ID",
+        name: "mapJobId",
+        type: "string",
+        default: "",
+        required: true,
+        displayOptions: {
+          show: { resource: ["map"], operation: ["getAsyncStatus"] },
+        },
+      },
+      {
+        displayName: "URL to Trace",
+        name: "traceUrl",
+        type: "string",
+        default: "",
+        required: true,
+        placeholder: "https://example.com/pricing",
+        description: "Page URL to trace back to the seed",
+        displayOptions: {
+          show: { resource: ["crawl"], operation: ["getTrace"] },
+        },
+      },
+      {
+        displayName: "Webhook URL",
+        name: "mapWebhookUrl",
+        type: "string",
+        default: "",
+        placeholder: "https://example.com/hooks/geekflare",
+        description:
+          "HTTPS URL that receives job events. The signing secret is returned once, when the job is created.",
+        displayOptions: {
+          show: { resource: ["map"], operation: ["startAsync"] },
+        },
+      },
+
+      // ── Crawl: start / start sync ─────────────────────────────────
+      {
+        displayName: "Additional Options",
+        name: "crawlOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: { resource: ["crawl"], operation: ["start", "startSync"] },
+        },
+        options: [
+          {
+            displayName: "Allow Patterns",
+            name: "allowPatterns",
+            type: "string",
+            default: "",
+            placeholder: "/blog/*,/docs/*",
+            description: "Comma-separated URL patterns to include",
+          },
+          {
+            displayName: "Block Ads",
+            name: "blockAds",
+            type: "boolean",
+            default: true,
+          },
+          {
+            displayName: "Deny Patterns",
+            name: "denyPatterns",
+            type: "string",
+            default: "",
+            placeholder: "/login,/cart/*",
+            description: "Comma-separated URL patterns to skip",
+          },
+          {
+            displayName: "Device",
+            name: "device",
+            type: "options",
+            options: [
+              { name: "Desktop", value: "desktop" },
+              { name: "Mobile", value: "mobile" },
+            ],
+            default: "desktop",
+          },
+          {
+            displayName: "Format",
+            name: "format",
+            type: "options",
+            options: [
+              { name: "HTML", value: "html" },
+              { name: "Markdown", value: "markdown" },
+            ],
+            default: "markdown",
+          },
+          {
+            displayName: "Include External Links",
+            name: "includeExternal",
+            type: "boolean",
+            default: false,
+            description: "Whether to follow links to other domains",
+          },
+          {
+            displayName: "Max Depth",
+            name: "maxDepth",
+            type: "number",
+            default: 3,
+            description: "Maximum number of hops from the seed URL",
+          },
+          {
+            displayName: "Max Pages",
+            name: "maxPages",
+            type: "number",
+            default: 500,
+          },
+          {
+            displayName: "Max Retries",
+            name: "maxRetries",
+            type: "number",
+            typeOptions: { minValue: 0 },
+            default: 1,
+            description: "Retries per page before it is counted as failed",
+          },
+          {
+            displayName: "Proxy Country",
+            name: "proxyCountry",
+            type: "string",
+            default: "",
+            placeholder: "us, gb, de, in ...",
+          },
+          {
+            displayName: "Proxy Mode",
+            name: "proxyMode",
+            type: "options",
+            options: [
+              { name: "Always", value: "true" },
+              { name: "Auto (Retry via Proxy If Blocked)", value: "auto" },
+              { name: "Never (Default)", value: "false" },
+            ],
+            default: "false",
+            description:
+              "Pages that succeed through a proxy cost extra credits",
+          },
+          {
+            displayName: "Render JavaScript",
+            name: "renderJS",
+            type: "boolean",
+            default: true,
+          },
+          {
+            displayName: "Timeout (Seconds)",
+            name: "timeout",
+            type: "number",
+            default: 99,
+          },
+        ],
+      },
+      {
+        displayName: "Webhook",
+        name: "crawlWebhookOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: { resource: ["crawl"], operation: ["start"] },
+        },
+        options: [
+          {
+            displayName: "Webhook Events",
+            name: "webhookEvents",
+            type: "multiOptions",
+            options: [
+              { name: "Crawl Cancelled", value: "crawl.cancelled" },
+              { name: "Crawl Completed", value: "crawl.completed" },
+              { name: "Crawl Failed", value: "crawl.failed" },
+              { name: "Crawl On Hold", value: "crawl.on_hold" },
+              { name: "Crawl Page", value: "crawl.page" },
+              { name: "Crawl Resumed", value: "crawl.resumed" },
+              { name: "Crawl Started", value: "crawl.started" },
+            ],
+            default: [],
+            description:
+              "Events to send. If empty, everything except Crawl Page is sent. Crawl Page sends one call per page.",
+          },
+          {
+            displayName: "Webhook URL",
+            name: "webhookUrl",
+            type: "string",
+            default: "",
+            placeholder: "https://example.com/hooks/geekflare",
+            description:
+              "HTTPS URL that receives job events. The signing secret is returned once, when the crawl is created.",
+          },
+        ],
+      },
+
+      // ── Crawl: other operations ───────────────────────────────────
+      {
+        displayName: "Additional Options",
+        name: "listOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: { show: { resource: ["crawl"], operation: ["list"] } },
+        options: [
+          {
+            displayName: "Limit",
+            name: "limit",
+            type: "number",
+            typeOptions: { minValue: 1 },
+            default: 50,
+            description: "Max number of results to return",
+          },
+          {
+            displayName: "Offset",
+            name: "offset",
+            type: "number",
+            typeOptions: { minValue: 0 },
+            default: 0,
+          },
+          {
+            displayName: "Status",
+            name: "status",
+            type: "options",
+            options: [
+              { name: "Cancelled", value: "cancelled" },
+              { name: "Completed", value: "completed" },
+              { name: "Failed", value: "failed" },
+              { name: "On Hold", value: "on_hold" },
+              { name: "Queued", value: "queued" },
+              { name: "Running", value: "running" },
+            ],
+            default: "completed",
+          },
+        ],
+      },
+      {
+        displayName: "Additional Options",
+        name: "paginationOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: {
+            resource: ["crawl"],
+            operation: ["getStatus", "getWebhookDeliveries"],
+          },
+        },
+        options: [
+          {
+            displayName: "Limit",
+            name: "limit",
+            type: "number",
+            typeOptions: { minValue: 1 },
+            default: 50,
+            description: "Max number of results to return",
+          },
+          {
+            displayName: "Offset",
+            name: "offset",
+            type: "number",
+            typeOptions: { minValue: 0 },
+            default: 0,
+          },
+        ],
+      },
+      {
+        displayName: "Additional Options",
+        name: "errorsOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: { resource: ["crawl"], operation: ["getErrors"] },
+        },
+        options: [
+          {
+            displayName: "Error Type",
+            name: "errorType",
+            type: "string",
+            default: "",
+            description: "Only return failed pages with this error type",
+          },
+          {
+            displayName: "Limit",
+            name: "limit",
+            type: "number",
+            typeOptions: { minValue: 1 },
+            default: 50,
+            description: "Max number of results to return",
+          },
+          {
+            displayName: "Offset",
+            name: "offset",
+            type: "number",
+            typeOptions: { minValue: 0 },
+            default: 0,
+          },
+        ],
+      },
+      {
+        displayName: "Additional Options",
+        name: "downloadOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: { resource: ["crawl"], operation: ["download"] },
+        },
+        options: [
+          {
+            displayName: "Retry Build",
+            name: "retry",
+            type: "boolean",
+            default: false,
+            description: "Whether to rebuild the ZIP after a failed build",
+          },
+        ],
+      },
+
+      // ── Map ───────────────────────────────────────────────────────
+      {
+        displayName: "Additional Options",
+        name: "mapOptions",
+        type: "collection",
+        placeholder: "Add Option",
+        default: {},
+        displayOptions: {
+          show: { resource: ["map"], operation: ["map", "startAsync"] },
+        },
+        options: [
+          {
+            displayName: "Allow Patterns",
+            name: "allowPatterns",
+            type: "string",
+            default: "",
+            placeholder: "/blog/*,/docs/*",
+            description: "Comma-separated URL patterns to include",
+          },
+          {
+            displayName: "Deny Patterns",
+            name: "denyPatterns",
+            type: "string",
+            default: "",
+            placeholder: "/login,/cart/*",
+            description: "Comma-separated URL patterns to skip",
+          },
+          {
+            displayName: "Include External Links",
+            name: "includeExternal",
+            type: "boolean",
+            default: false,
+            description: "Whether to follow links to other domains",
+          },
+          {
+            displayName: "Max Depth",
+            name: "maxDepth",
+            type: "number",
+            default: 3,
+            description: "Maximum number of hops from the seed URL",
+          },
+          {
+            displayName: "Max Pages",
+            name: "maxPages",
+            type: "number",
+            default: 500,
+          },
+          {
+            displayName: "Timeout (Seconds)",
+            name: "timeout",
+            type: "number",
+            default: 99,
+          },
+        ],
+      },
     ],
   };
 
@@ -1207,6 +1698,32 @@ export class Geekflare implements INodeType {
       let body: IDataObject = {};
 
       try {
+        if (CRAWL_MAP_OPERATIONS.includes(operation)) {
+          const spec = buildCrawlMapRequest(this, i, operation);
+          const crawlMapResponse =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "geekflareApi",
+              {
+                method: spec.method,
+                url: `${baseUrl}${spec.path}`,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                qs: spec.qs,
+                body: spec.body,
+                json: true,
+              },
+            );
+          returnData.push({
+            json: JSON.parse(
+              JSON.stringify(crawlMapResponse, getCircularReplacer()),
+            ) as IDataObject,
+            pairedItem: { item: i },
+          });
+          continue;
+        }
+
         if (operation === "webscraping") {
           const url = this.getNodeParameter("url", i) as string;
           const format = this.getNodeParameter("format", i) as string[];
@@ -1419,4 +1936,138 @@ function getCircularReplacer() {
     }
     return value;
   };
+}
+
+interface ICrawlMapRequest {
+  method: IHttpRequestMethods;
+  path: string;
+  body?: IDataObject;
+  qs?: IDataObject;
+}
+
+const CRAWL_MAP_OPERATIONS = [
+  "start",
+  "startSync",
+  "list",
+  "getStatus",
+  "getErrors",
+  "getTrace",
+  "cancel",
+  "getWebhookDeliveries",
+  "download",
+  "map",
+  "startAsync",
+  "getAsyncStatus",
+];
+
+function buildCrawlMapRequest(
+  ctx: IExecuteFunctions,
+  i: number,
+  operation: string,
+): ICrawlMapRequest {
+  if (operation === "start" || operation === "startSync") {
+    const url = ctx.getNodeParameter("url", i) as string;
+    const opts = ctx.getNodeParameter("crawlOptions", i) as IDataObject;
+    const body: IDataObject = { url, ...normalizeScope(opts) };
+    if (operation === "start") {
+      const webhook = ctx.getNodeParameter(
+        "crawlWebhookOptions",
+        i,
+      ) as IDataObject;
+      Object.assign(body, removeEmpty(webhook));
+    }
+    return {
+      method: "POST",
+      path: operation === "start" ? "/crawl" : "/crawl/sync",
+      body,
+    };
+  }
+
+  if (operation === "list") {
+    const opts = ctx.getNodeParameter("listOptions", i) as IDataObject;
+    return { method: "GET", path: "/crawl", qs: removeEmpty(opts) };
+  }
+
+  if (operation === "map" || operation === "startAsync") {
+    const url = ctx.getNodeParameter("url", i) as string;
+    const opts = ctx.getNodeParameter("mapOptions", i) as IDataObject;
+    const body: IDataObject = { url, ...normalizeScope(opts) };
+    if (operation === "startAsync") {
+      const webhookUrl = ctx.getNodeParameter("mapWebhookUrl", i) as string;
+      if (webhookUrl) body.webhookUrl = webhookUrl;
+    }
+    return {
+      method: "POST",
+      path: operation === "map" ? "/map" : "/map/async",
+      body,
+    };
+  }
+
+  if (operation === "getAsyncStatus") {
+    const jobId = encodeURIComponent(
+      ctx.getNodeParameter("mapJobId", i) as string,
+    );
+    return { method: "GET", path: `/map/async/${jobId}` };
+  }
+
+  const crawlId = encodeURIComponent(
+    ctx.getNodeParameter("crawlId", i) as string,
+  );
+  const base = `/crawl/${crawlId}`;
+
+  if (operation === "getStatus") {
+    const opts = ctx.getNodeParameter("paginationOptions", i) as IDataObject;
+    return { method: "GET", path: base, qs: removeEmpty(opts) };
+  }
+  if (operation === "getErrors") {
+    const opts = ctx.getNodeParameter("errorsOptions", i) as IDataObject;
+    return { method: "GET", path: `${base}/errors`, qs: removeEmpty(opts) };
+  }
+  if (operation === "getTrace") {
+    const url = ctx.getNodeParameter("traceUrl", i) as string;
+    return { method: "GET", path: `${base}/trace`, qs: { url } };
+  }
+  if (operation === "cancel") {
+    return { method: "POST", path: `${base}/cancel` };
+  }
+  if (operation === "getWebhookDeliveries") {
+    const opts = ctx.getNodeParameter("paginationOptions", i) as IDataObject;
+    return { method: "GET", path: `${base}/webhooks`, qs: removeEmpty(opts) };
+  }
+  if (operation === "download") {
+    const opts = ctx.getNodeParameter("downloadOptions", i) as IDataObject;
+    return { method: "GET", path: `${base}/download`, qs: removeEmpty(opts) };
+  }
+
+  throw new NodeOperationError(
+    ctx.getNode(),
+    `Unknown operation: ${operation}`,
+    { itemIndex: i },
+  );
+}
+
+function normalizeScope(opts: IDataObject): IDataObject {
+  const flat = removeEmpty(opts);
+  for (const key of ["allowPatterns", "denyPatterns"]) {
+    if (flat[key] !== undefined) {
+      const list = (flat[key] as string)
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+      delete flat[key];
+      if (list.length > 0) flat[key] = list;
+    }
+  }
+  return flat;
+}
+
+// Unlike stripEmpty, keeps 0 and false (for example offset 0 and maxRetries 0).
+function removeEmpty(obj: IDataObject): IDataObject {
+  const result: IDataObject = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === "" || value === null || value === undefined) continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    result[key] = value;
+  }
+  return result;
 }
